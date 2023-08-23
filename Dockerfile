@@ -39,11 +39,20 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends \
   vim tmux iputils-ping \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# update zsh themes & plugins
-RUN sed -i 's/codespaces/aussiegeek/' /root/.zshrc && \
-    sed -i 's/codespaces/aussiegeek/' /home/vscode/.zshrc && \
-    sed -i 's/(git)/(git rails rake docker docker-compose)/' /root/.zshrc && \
-    sed -i 's/(git)/(git rails rake docker docker-compose)/' /home/vscode/.zshrc
 
-# customize dev container plugin
-LABEL devcontainer.metadata='[{"postCreateCommand": "[[ -f Gemfile ]] &&  bundle check && bundle install" },"customizations":{"vscode":{"extensions":["eamodio.gitlens","ms-azuretools.vscode-docker","misogi.ruby-rubocop"]}}]'
+# our project need tzdata
+RUN apt update -qq && DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata \
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+# update zsh themes for vscode user
+USER vscode
+RUN mkdir /home/vscode/.ssh/
+RUN sed -i 's/codespaces/aussiegeek/' /home/vscode/.zshrc && \
+    sed -i 's/(git)/(git rails rake docker docker-compose)/' /home/vscode/.zshrc && \
+    sudo chsh -s /usr/bin/zsh vscode && \
+    # ignore gemset.. we don't need to separate gemsets
+    echo "export rvm_ignore_gemsets_flag=1" >> /home/vscode/.rvmrc && \
+    echo 'gem: --no-rdoc --no-ri' | sudo tee -a /etc/gemrc > /dev/null && \
+    # fix: files may not be writable, so sudo is needed:
+    /usr/local/rvm/scripts/rvm fix-permissions system
+
