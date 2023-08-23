@@ -44,6 +44,13 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends \
 RUN apt update -qq && DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
+## install postgresql-client
+# https://www.postgresql.org/download/linux/ubuntu/
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+  && apt-get update && apt-get install -y --no-install-recommends postgresql-client-14 \
+  && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
 # update zsh themes for vscode user
 USER vscode
 RUN mkdir /home/vscode/.ssh/
